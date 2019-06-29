@@ -1,4 +1,4 @@
-# Create a Hightly Available, Fault Tolerant Wordpress Site on AWS
+# Create a Highly Available, Fault Tolerant Wordpress Site on AWS
 > assume valid aws account
 
 ## Setup our Buckets
