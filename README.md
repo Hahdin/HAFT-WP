@@ -1,7 +1,6 @@
 # Create a Highly Available, Fault Tolerant Wordpress Site on AWS
 > assume valid aws account
 
-If its still running, you can see mine [here](http://35.183.57.211/) or [here](35.183.23.117)
 ## Setup our Buckets
 Create 2 buckets, one for the wordpress code and another for the media.
 - accept defaults
@@ -240,7 +239,10 @@ Click ```Next: Register Targets``` and select your EC2 instance, Review and Crea
 
 
 ## Route 53
-If you have created a domain name, go to route 53 and select it, and choose ```Create Recordset```
+### Important note
+This really ONLY works if you have a domain name, and that will cost you some money.
+
+For our public domain name to use the reader nodes, go to route 53 and select it, and choose ```Create Recordset```
 
 Choose Alias: Yes and then choose your ALB from the list, and click ```Create```.
 
