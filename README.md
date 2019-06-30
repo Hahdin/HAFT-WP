@@ -1,6 +1,7 @@
 # Create a Highly Available, Fault Tolerant Wordpress Site on AWS
 > assume valid aws account
 
+If its still running, you can see mine [here](http://35.182.226.33/)
 ## Setup our Buckets
 Create 2 buckets, one for the wordpress code and another for the media.
 - accept defaults
@@ -248,6 +249,115 @@ Choose Alias: Yes and then choose your ALB from the list, and click ```Create```
 If you didn't register your EC2 instance as a target when you created your ALB, go back to EC2 - Target Groups, select your target group and click on the ```Targets``` tab.
 
 If you have no registered targets listed, click ```Edit```, select your instance, and click ```Add to Register``` and ```Save```.
+
+
+## Create Read / Write Nodes
+
+### Read Node
+We want one EC2 instance to be our reader instance, all blog posts will be read on this instance. It will continually sync up with the S3 code bucket to keep it current, pulling files down from the bucket.
+To do this we are going to use a cron job.
+```bash
+cd /etc
+nano crontab
+```
+Add the following:
+```
+*/1 * * * * root aws s3 sync --delete s3://yourcodebucketname /var/www/html
+```
+CTRL-X, Y and enter to save and exit.
+
+
+#### Create an image
+
+Go to EC2 and select our instance, from actions choose Image > Create Image
+
+Give it a name identifying it as the default read node for our WP site, select ``` no reboot``` and click ```Create Image```.
+
+Now we have an AMI for our fleet of readers.
+
+### Write Node
+
+Now that we have created an AMI for our read node, edit the crontab for the write node.
+```bash
+cd /etc
+nano crontab
+```
+We want this to push to the S3 bucket to ensure everything is current. Also push to the media bucket for our CloudFront distribution.
+```
+*/1 * * * * root aws s3 sync --delete /var/www/html s3://yourcodebucketname 
+*/1 * * * * root aws s3 sync --delete /var/www/html/wp-content/uploads s3://yourmediabucketname
+```
+
+This will be the instance our bloggers will use to write blogs.
+
+### Create our Readers from the image 
+
+#### Create an Launch Configuration
+
+Go to Auto Scaling group and click create. Then click the link ```Create a new launch configuration```
+
+On the left select MyAMIs and select our read node image.
+
+Accept t2.micro, click ```Next: ...```
+
+Name it and select our S3 role for the IAM role, as it needs to be using our bucket.
+
+Add the following bootstrap script:
+```bash
+#!/bin/bash
+yum update -y
+# update with the wp code
+aws s3 sync --delete s3://yourcodebucketname /var/www/html
+
+```
+So instances launched in our autoscaling group will update and grab the latest copy of the wp from the code bucket. 
+
+Proceed, accept default storage and then choose our dmz security group, and hit ```Review```, then click ```Create launch configuration```, select/create a keypair file.
+
+In the ```Create Auto Scaling Group``` page, name it and select the groups size you desire. Accept our default VPC, and select **all** the subnets in your region.
+
+In the ```Advanced Details``` settings select ```Receive traffic from one or more load balancers``` and select our reader group in ```Target Groups```
+
+> I chose ELB for Health Check type, pick your preference and adject settings
+
+Click ```Next: Configure scaling policies```, default is ```Keep this group at its initial size```, use it unless you need to adjust the capacity of the group with policies (based on cpu, etc)
+
+Click ```Next: Configure Notifications```, add if you wish, add a name in the tags so you remember what this is (your word press reader node), and click ```Review```. 
+
+Should have something like this.
+
+    Group name YourReaderNodesName
+    Group size 2
+    Minimum Group Size 2
+    Maximum Group Size 2
+    Subnet(s) subnet-9c05abe6,subnet-84b12cec
+    Load Balancers 
+    Target Groups yourWordPressInstanceGroup
+    Health Check Type ELB
+    Health Check Grace Period 300
+    Detailed Monitoring No
+    Instance Protection None
+    Service-Linked Role AWSServiceRoleForAutoScaling
+
+Go now to our Target Groups, and remove our Writer node from it, as we don't really want it getting read requests.
+
+Select your wp instance group, click the Targets tab and click ```Edit```. From the ```Registered Targets``` select your writer node and click ```Remove```.
+
+Ideally these would be the ones connected to your DNS name, so public traffic going to view your blog will be directed to the reader node instances. Your bloggers would connect to your writer node to create new blogs posts and uploads. The respective cron jobs on the servers will either pull from (reader node) or push to (writer node) your S3 buckets.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
