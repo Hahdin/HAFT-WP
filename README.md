@@ -1,7 +1,7 @@
 # Create a Highly Available, Fault Tolerant Wordpress Site on AWS
 > assume valid aws account
 
-If its still running, you can see mine [here](http://35.182.226.33/)
+If its still running, you can see mine [here](http://35.183.57.211/)
 ## Setup our Buckets
 Create 2 buckets, one for the wordpress code and another for the media.
 - accept defaults
@@ -292,7 +292,7 @@ This will be the instance our bloggers will use to write blogs.
 
 ### Create our Readers from the image 
 
-#### Create an Launch Configuration
+#### Create a Launch Configuration
 
 Go to Auto Scaling group and click create. Then click the link ```Create a new launch configuration```
 
@@ -318,7 +318,7 @@ In the ```Create Auto Scaling Group``` page, name it and select the groups size 
 
 In the ```Advanced Details``` settings select ```Receive traffic from one or more load balancers``` and select our reader group in ```Target Groups```
 
-> I chose ELB for Health Check type, pick your preference and adject settings
+> I chose ELB for Health Check type, pick your preference and accept settings
 
 Click ```Next: Configure scaling policies```, default is ```Keep this group at its initial size```, use it unless you need to adjust the capacity of the group with policies (based on cpu, etc)
 
