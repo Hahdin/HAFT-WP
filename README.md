@@ -1,7 +1,7 @@
 # Create a Highly Available, Fault Tolerant Wordpress Site on AWS
 > assume valid aws account
 
-If its still running, you can see mine [here](http://35.183.57.211/)
+If its still running, you can see mine [here](http://35.183.57.211/) or [here](35.183.23.117)
 ## Setup our Buckets
 Create 2 buckets, one for the wordpress code and another for the media.
 - accept defaults
@@ -344,6 +344,15 @@ Go now to our Target Groups, and remove our Writer node from it, as we don't rea
 Select your wp instance group, click the Targets tab and click ```Edit```. From the ```Registered Targets``` select your writer node and click ```Remove```.
 
 Ideally these would be the ones connected to your DNS name, so public traffic going to view your blog will be directed to the reader node instances. Your bloggers would connect to your writer node to create new blogs posts and uploads. The respective cron jobs on the servers will either pull from (reader node) or push to (writer node) your S3 buckets.
+
+# Updating WP Plugins / Installing new Themes
+
+In your writer EC2 instance, ssh in an run this to allow your word press site to update plugins and install new themes:
+
+```bash
+sudo chown -R apache:apache /var/www/html
+```
+> Thanks to [Basil](https://stackoverflow.com/users/1103128/basil-abbas) who answered this [question](https://stackoverflow.com/questions/17768201/wordpress-on-ec2-requires-ftp-credentials-to-install-plugins)
 
 
 
